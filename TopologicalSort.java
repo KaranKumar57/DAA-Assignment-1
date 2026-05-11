@@ -1,38 +1,75 @@
 import java.util.*;
 
 public class TopologicalSort {
+
+    enum Color { WHITE, GRAY, BLACK }
+
+    static class Node {
+        char id;
+        Color color;
+        int discoveryTime, finishingTime;
+        Node parent;
+
+        Node(char id) {
+            this.id = id;
+            this.color = Color.WHITE;
+            this.parent = null;
+        }
+    }
+
+    private Map<Character, Node> nodes = new LinkedHashMap<>();
     private Map<Character, List<Character>> adj = new HashMap<>();
+    private Stack<Character> topologicalOrder = new Stack<>();
+    private int time = 0;
 
     public void addEdge(char u, char v) {
+        nodes.putIfAbsent(u, new Node(u));
+        nodes.putIfAbsent(v, new Node(v));
         adj.computeIfAbsent(u, k -> new ArrayList<>()).add(v);
         adj.putIfAbsent(v, new ArrayList<>());
     }
 
-    public void topologicalSort() {
-        Stack<Character> stack = new Stack<>();
-        Set<Character> visited = new HashSet<>();
 
-        for (char vertex : adj.keySet()) {
-            if (!visited.contains(vertex)) {
-                dfs(vertex, visited, stack);
+    public void dfs() {
+        for (Node u : nodes.values()) {
+            u.color = Color.WHITE;
+            u.parent = null;
+        }
+        time = 0;
+        for (Node u : nodes.values()) {
+            if (u.color == Color.WHITE) {
+                dfsVisit(u);
             }
         }
-
-        System.out.println("topological sort order:");
-        while (!stack.isEmpty()) {
-            System.out.print(stack.pop() + " ");
-        }
-        System.out.println();
     }
 
-    private void dfs(char v, Set<Character> visited, Stack<Character> stack) {
-        visited.add(v);
-        for (char neighbor : adj.get(v)) {
-            if (!visited.contains(neighbor)) {
-                dfs(neighbor, visited, stack);
+    
+    private void dfsVisit(Node u) {
+        time = time + 1;
+        u.discoveryTime = time;
+        u.color = Color.GRAY;
+
+        for (char neighborId : adj.get(u.id)) {
+            Node v = nodes.get(neighborId);
+            if (v.color == Color.WHITE) {
+                v.parent = u;
+                dfsVisit(v);
             }
         }
-        stack.push(v);
+
+        u.color = Color.BLACK;
+        time = time + 1;
+        u.finishingTime = time;
+        
+        topologicalOrder.push(u.id);
+    }
+
+    public void printTopologicalSort() {
+        System.out.println("topological sort:");
+        while (!topologicalOrder.isEmpty()) {
+            System.out.print(topologicalOrder.pop() + " ");
+        }
+        System.out.println();
     }
 
     public static void main(String[] args) {
@@ -50,6 +87,7 @@ public class TopologicalSort {
         graph.addEdge('w', 'z');
         graph.addEdge('y', 'v');
 
-        graph.topologicalSort();
+        graph.dfs();
+        graph.printTopologicalSort();
     }
 }
